@@ -27,6 +27,7 @@ Table Operations:
 * Integer
 * String 
 ## How To Use:
+Add this files in project Directory in home and
 Run this command in your terminal
 ```sh
 . ~/project/main_menu
