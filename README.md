@@ -29,5 +29,7 @@ Table Operations:
 ## How To Use:
 Run this command in your terminal
 ```sh
-. ./main_menu
+. ~/project/main_menu
 ```
+# Demo
+https://github.com/Abdelrahmanelfeky987/Database-Engine-in-Bash/assets/114874560/40efdead-4bc2-4bea-8694-2da8ceeee4dc
