@@ -1,0 +1,13 @@
+#!/bin/bash
+
+dir=~/DB
+
+
+# Check if the directory is empty
+if [ -z "$(ls -A "$dir")" ]; then
+        echo -e "there is no databases yet, you can create one."
+#if not empty listing directories only 
+    else
+	ls -F $dir | grep / | tr / " "
+    fi
+

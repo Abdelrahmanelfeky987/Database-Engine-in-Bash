@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+
+files=()
+#Iterate over files(tables) in the current directory(database)
+for i in ./*
+do
+#Check if the type is file and avoid meta data files
+	if [ -f $i ] && [[ $i != *"_meta"* ]];then
+		files+=("$i")
+	else
+		continue
+	fi
+done
+#Check if there is no files     
+if [ ${#files[@]} -eq 0 ]; then
+       	echo "No tables found you can create one"
+else
+	# Print the names of the tables
+
+	for file in "${files[@]}"
+	do
+		echo "$file" | tr ./ ">"
+	done
+fi
+    
+
+
+

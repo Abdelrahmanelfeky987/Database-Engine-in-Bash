@@ -1,0 +1,52 @@
+#! /usr/bin/bash
+export  er='\033[31m'
+export  main='\033[0m' 
+export suc='\033[0;32m'
+export tit='\033[4;34m'
+export pd='\033[0;36m'
+export yellow='\033[0;33m'
+export cyan='\033[0;36m'
+export magnta='\033[0;35m'
+export titm='\033[35;7m'
+# Creating folder of database 
+clear
+if [ -d ~/DB ]; then 
+	cd ~/DB
+else
+	mkdir ~/DB
+	cd ~/DB
+fi
+# Creating main menu for database
+PS3=`echo -e "$pd Choose option >>> $main"`
+select option in "Create Database" "List Database" "Connect Database" "Drop Database" "Exit"
+do
+	case $REPLY in
+		1)
+			echo -e "$tit...........................creating database...............................$main"
+			. ~/project/createDB
+		;;
+
+		2)
+			echo -e "$tit.................................Databases..................................$main"
+			. ~/project/listDB
+		;;
+
+		3)
+			echo -e  "$tit.......................connecting database.......................$main"
+			. ~/project/connectDB
+		;;
+
+		4)
+			echo -e "$tit.........................dropping database.........................$main"
+			. ~/project/dropDB
+		;;
+
+		5)
+			exit
+		;;
+		
+		*)
+			echo  -e "$er Invalid Option $main"
+		;;
+	esac
+done

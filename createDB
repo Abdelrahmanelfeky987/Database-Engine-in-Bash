@@ -1,0 +1,74 @@
+#!/usr/bin/bash
+#1)Starting with taking input name from user 
+#2)validating this input name dont have any special characters,dont have spaces and cant start with numbers 
+#3)handling the file if existed or not 
+export LC_COLLATE=C # Enable Case Senstive [Small , Capital ]
+shopt -s extglob   # Enable Special Regex 
+while true 
+do
+# Prompt the user to enter a database name or press ESC to go back
+	echo -e -n "$pd Enter database name OR ESC : $main"
+	read nameDB
+# Check if the user pressed ESC
+	if [[ $nameDB == $'\e' ]] ; then
+		. ~/project/main_menu
+	else
+# Check different cases 
+		case $nameDB in
+	#Name contains spaces, replace them with underscores
+			*[[:space:]] | *[[:space:]]* | [[:space:]]* )
+				nameDB=$(echo "$nameDB" | sed 's/[[:space:]]/_/g')
+				if [ -e $nameDB ] ;then
+			# Check if the database already exist
+					echo -e "$er This database is already exist $main"
+					continue
+				else
+			# if not create database 
+					mkdir $nameDB
+					echo -e "$suc $nameDB is created successfully $main"
+					break
+				fi
+			;;
+
+
+			'' )
+	# Check if the name empty, back to enter the name agian
+				echo -e  "$er The name can't be empty $main"
+				continue
+			;;
+
+
+			[0-9]* )
+	# Check if the name didn't start with numbers, back to enter the name agian
+				echo -e  "$er The name can't start with numbers $main"
+				continue
+			;;
+
+	# Check if the name have any special characters, back to enter the name agian
+			*['!''@#/$\"*{^})(+|,;:~`.%&/=-]>[<?']* )
+				echo -e  "$er The name can't have any special characters $main"
+				continue
+			;;
+
+
+			+([A-Za-z_]*) )
+	#correct case that name start with letters and don't have any special characters then create database with this name
+				if [ -e $nameDB ] ;then
+					echo -e "$er This database is already exist $main"
+					continue
+				else
+					mkdir $nameDB
+					echo -e "$suc $nameDB is created successfully $main"
+					break
+				fi
+			;;
+
+			*)
+				echo -e "$er Invalid Name $main"
+				continue
+				
+
+			;;
+		esac
+	fi
+done

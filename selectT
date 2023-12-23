@@ -1,0 +1,187 @@
+#!/usr/bin/bash
+OLDIFS=$IFS
+
+# Listing table names 
+
+files=()
+for i in ./*
+do
+	if [ -f $i ] && [[ $i != *"_meta"* ]];then
+		files+=("$i")
+	else
+		continue
+	fi
+done
+        
+if [ ${#files[@]} -eq 0 ]; then
+       	echo "No tables found you can create one"
+else
+	for file in "${files[@]}"
+	do
+		echo "$file" | tr ./ ">"
+	done
+fi
+
+
+# Prompt User to choose a table from the list and check if the table exists or not
+    
+echo -e -n "$pd choose table or ESC : $main"
+read tbname
+if [[ $tbname == $'\e' ]] ; then
+	. ~/project/options
+elif [[ -z $tbname || ! -f $tbname ]] ; then
+	echo -e "$er No such table with this name $main"
+	continue
+else
+
+# If the table exists display columns and number of each column and total number of rows 
+
+IFS=':'
+str=`awk -F : '{if(NR == 1){print $0}}' $tbname"_meta"`
+read -ra fields <<< "$str"
+IFS=$OLDIFS
+echo -e "$cyan The Columns of this table : $main"
+for ((i=0 ; i<${#fields[@]};i++))
+do
+	echo "$((i+1)) ) ${fields[$i]}"
+done
+
+
+rows=`wc -l $tbname | awk '{print $1}' `	
+echo "Number of rows : $((rows+1))"
+
+# Menu for user to choose if he/she need to display all data in table of to select range of rows and specific columns or specific row with PK
+
+select opt in "Select All" "Select range" "Select Specific row" "Exit"
+do
+
+	case $REPLY in
+	1)
+		# Display all data in the table
+
+		clear
+		echo -e "$titm ${fields[@]} $main"
+		cat $tbname
+		echo -e "$magnta press 4 to exit $main"
+	;;
+	2)
+		# Select a range of rows and specific columns
+
+		while true 
+		do
+			echo -e -n "$pd enter you range from index or ESC: $main"
+			read from
+			if [[ $from == $'\e' ]] ; then
+				. ~/project/options
+			elif [[ "$from" =~ ^[0-9]+$ && "$from" -gt 0 ]];then
+		# Check if the entered range is within the number of rows
+
+				if (( $from <= $rows )) ;then
+					let from=$from
+				else
+					echo -e "$er Please enter a valid range $main"
+					continue
+				fi
+			else 
+				echo -e  "$er Numbers Only $main"
+				continue
+			fi
+
+			echo -e -n "$pd TO index : $main"
+			read to 
+			if [[ $to == $'\e' ]] ; then
+				. ~/project/options
+			elif [[ "$to" =~ ^[0-9]+$ && "$to" -gt 0 ]];then
+				if (( $to <= $rows+1 )) ;then
+					let to=$to+1
+				else
+					echo -e "$er Please enter a valid range $main"
+					continue
+				fi
+
+			else 
+				echo -e "$er Numbers Only $main"
+				continue
+			fi
+		# Prompt the user to enter field numbers (comma-separated)
+			echo -e -n "$pd Enter the field numbers (comma-separated): $main"
+			read cols
+			if [[ "$cols" =~ ^[0-9,]+$ ]];then 
+				clear				
+		# Use awk to select specific columns and rows within the specified range
+  
+				awk -F: -v fields="$cols" '
+				   {
+				    split(fields, selected, ",")
+				    for (i in selected) {
+				      selected_fields[selected[i]] = 1
+				    }
+				  }
+				  {
+				    for (i = 1; i <= NF; i++) {
+				      if (i in selected_fields) {
+					printf $i " "
+				      }
+				    }
+				    print ""
+				  }
+				' $tbname | sed  -n "${from},${to}p"
+				echo -e "$magnta press 4 to exit $main"
+
+				break
+			else 
+				echo "please enter number of fields (comma-separated) : "
+				continue
+			fi
+
+
+
+		done
+	;;
+	3)
+	while true
+	do
+	# Select a specific row with a primary key
+
+			echo -e -n "$pd Enter PK of record you want to update OR ESC : $main"
+			read pk
+			found=false
+			index=0
+			if [[ $pk == $'\e' ]] ; then
+			. ~/project/options
+			fi
+			loop=`cut -d : -f 1 $tbname`
+			read -ra arr3 <<< $loop
+			for val in "${arr3[@]}"
+			do
+				index=$((index + 1))
+				if [[ "$pk" == "$val" ]];then
+					found=true
+					let index=$index
+					break
+			fi
+				
+			done
+
+			if [[ "${found}" == true ]];then
+					sed -n "${index}p" $tbname
+			else
+				echo -e  "$er Primary key not found $main"
+			fi
+
+	done
+
+	;;
+	4)
+		. ~/project/options
+	;;
+	*)
+		echo -e "$er Invalid option $main"
+	;;
+	esac
+done
+fi
+
+
+
+

@@ -1,0 +1,206 @@
+#!/usr/bin/bash
+OLDIFS=$IFS
+# Listing table names 
+files=()
+for i in ./*
+do
+	if [ -f $i ] && [[ $i != *"_meta"* ]];then
+		files+=("$i")
+	else
+		continue
+	fi
+done
+        
+if [ ${#files[@]} -eq 0 ]; then
+       	echo -e  "$er No tables found you can create one $main"
+else
+	for file in "${files[@]}"
+	do
+		echo "$file" | tr ./ ">"
+	done
+fi
+
+# Make User to choose a table from the list and check if the table exists or not
+
+echo -e -n "$pd choose table or ESC : $main"
+read tbname
+if [[ $tbname == $'\e' ]] ; then
+	. ~/project/options
+elif [[ -z $tbname || ! -f $tbname ]] ; then
+	echo -e "$er No such table with this name $main"
+	continue
+else
+
+# If the table exists display columns and number of each column and total number of rows 
+
+IFS=':'
+str=`awk -F : '{if(NR == 1){print $0}}' $tbname"_meta"`
+read -ra fields <<< "$str"
+IFS=$OLDIFS
+echo "The Columns of this table : "
+for ((i=0 ; i<${#fields[@]};i++))
+do
+	echo "$((i+1)) ) ${fields[$i]}"
+done
+
+
+rows=`wc -l $tbname | awk '{print $1}' `	
+echo "Number of rows : $rows"
+# Menu for user to choose if he/she need to delete all data in table or drop specific columns or specif row by pk
+
+select opt in "Delete All" "Drop Field" "Delete row/rows" "Exit"
+do
+	case $REPLY in 
+	1)
+		echo "" > $tbname
+		clear
+		echo -e "$suc ALL DATA DELETED SUCCESSFULLY $main"
+		sleep 2
+		. ~/project/options
+	;;
+	2)
+		clear
+#Display column's names
+		echo -e "$magnta ${fields[@]} $main"
+
+
+		
+		while true 
+		do
+# initialize a flag to check if the column is found
+			found=false
+			echo -e -n "$pd Enter column names to delete  OR ESC: $main"
+			read colnames_input
+			if [[ $colnames_input == $'\e' ]] ; then
+				. ~/project/options
+			else
+				IFS=',' read -ra colnames <<< "$colnames_input"
+
+	# loop for each column
+
+				for colname in ${colnames[@]}
+				do
+	# loop the array of column names in meta data file
+					for ((i = 0 ; i <${#fields[@]} ; i++))
+					do
+
+		# check if the column name matches another column in meta data file
+						if [[ "$colname" == "${fields[i]}" ]]; then 
+							col_index=$((i+1))
+							found=true
+							break
+						fi
+					done
+		#If the column is found, delete process start
+				if [[ $found == true ]]; then 
+		# can't delete the PK 
+					if [[ $col_index -eq 1 ]]; then
+						echo -e "$er Cannot delete the primary key column '$colname' $main"
+					else
+			# use awk to remove a column data from data file 
+					awk -v col_index="$col_index" 'BEGIN { FS = OFS = ":" } { $col_index = ""; gsub(/:+/, ":"); gsub(/^:|:$/, ""); sub(/:{2,}/, ":"); print }' $tbname > $tbname"_temp"
+
+					mv $tbname"_temp" $tbname
+			# use awk to remove a column name from meta_data file 
+				awk -v col_index="$col_index" 'BEGIN { FS = OFS = ":" } { $col_index = ""; gsub(/:+/, ":"); gsub(/^:|:$/, ""); sub(/:{2,}/, ":"); print }' $tbname"_meta" > $tbname"_meta_temp"
+
+					mv $tbname"_meta_temp" $tbname"_meta"
+					clear
+					echo -e "$suc Column '$colname' deleted successfully.$main"
+					sleep 2 
+					. ~/project/options
+					fi
+				else
+				  echo -e "$er This column does not exist.$main"
+				continue
+				fi
+				done
+			fi
+		done
+	
+	;;
+	3)
+# infinite loop to make user choose the range and check this input to be only numbers and not greater than number of rows 
+		while true 
+		do
+			echo -e -n "$pd enter you range you want to delete from index OR ESC: $main"
+			read from
+			if [[ $from == $'\e' ]] ; then
+				. ~/project/options
+			elif [[ "$from" =~ ^[0-9]+$ && "$from" -gt 0 ]];then
+				if (( $from <= $rows )) ;then
+					let from=$from
+				else
+					echo -e "$er Please enter a valid range $main"
+					continue
+				fi
+			else 
+				echo -e  "$er Numbers Only $main"
+				continue
+			fi
+
+			echo -e -n "$pd TO index : $main"
+			read to 
+			if [[ $to == $'\e' ]] ; then
+				. ~/project/options
+			elif [[ "$to" =~ ^[0-9]+$ && "$to" -gt 0 ]];then
+				if (( $to <= $rows )) ;then
+					let to=$to
+				else
+					echo -e "$er Please enter a valid range $main"
+					continue
+				fi
+
+			else 
+				echo -e "$er Numbers Only $main"
+				continue
+			fi
+#using sed with option -i to delete the range of rows from the file
+			sed -i "${from},${to}d" $tbname
+			clear
+			echo -e "$suc Data deleted successfully $main"
+			sleep 2
+			. ~/project/options
+		done
+	;;
+	4)
+# if the user want to back to menu of table
+		. ~/project/options
+	;;
+	*)
+# if the user enter invalid option 
+		echo -e "$er Invalid option $main"
+	;;
+	esac
+done
+
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

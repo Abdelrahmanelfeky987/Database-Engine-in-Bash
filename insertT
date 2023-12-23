@@ -1,0 +1,159 @@
+#!/usr/bin/bash
+clear
+OLDIFS=$IFS
+# Listing tables
+files=()
+for i in ./*
+do
+	if [ -f $i ] && [[ $i != *"_meta"* ]];then
+		files+=("$i")
+	else
+		continue
+	fi
+done
+        
+if [ ${#files[@]} -eq 0 ]; then
+       	echo -e "$er No tables found you can create one $main"
+else
+	for file in "${files[@]}"
+	do
+		echo "$file" | tr ./ ">"
+	done
+fi
+
+export LC_COLLATE=C # Enable Case Senstive [Small , Capital ]
+shopt -s extglob   # Enable Special Regex 
+
+
+while true
+do
+	# Prompt the user to enter the table name to insert data into or press ESC to go back to the options menu
+
+	echo -e -n "${pd}Enter the table name you want to insert in or ESC: ${main}" 
+	read tname
+	if [[ $tname == $'\e' ]] ; then
+		. ~/project/options
+	elif [[ -z $tname || ! -f $tname ]] ; then
+		echo -e "$er No such table with this name $main"
+		continue
+	else
+		# Read metadata for the table
+
+		IFS=':'
+		str=`awk -F : '{if(NR == 1){print $0}}' $tname"_meta"`
+		read -ra arr <<< "$str"
+
+
+		str1=`awk -F : '{if(NR == 2){print $0}}' $tname"_meta"`
+		read -ra arr1 <<<"$str1"
+
+		str2=`awk -F : '{if(NR==3){print $0}}' $tname"_meta"`
+		read -ra arr2 <<< "$str2"
+
+		IFS=$OLDIFS
+
+
+		rw=""
+
+		# Loop through each column in the table
+
+
+		for ((i = 0 ; i <${#arr[@]} ; i++))
+		do
+
+			while true
+			do
+				loop=`cut -d : -f $((i+1)) $tname`
+				read -ra arr3 <<< $loop
+				found=false
+	# Prompt the user to enter the value for each column
+
+				echo -e -n "$pd Please enter el value of col $yellow ${arr[i]} $cyan  ${arr1[i]} $magnta ${arr2[i]} : $main" 
+				read data
+
+	# Check unique constraint				
+				if [[ ${arr2[i]} == "unique" ]] ;then
+					for val in "${arr3[@]}"
+					do
+						if [[ "$data" == "$val" ]];then
+							found=true
+							echo -e "$er This Column should be unique $main"
+							break
+						fi
+					done
+				fi
+	# if the input valid, append it to new row 
+				
+				if [[ "$found" == false ]];then
+					if [[ "$data" =~ ^[[:space:]]*$ ]]; then
+				      		echo -e "$er The value can't be empty. $main"
+						continue
+				       	fi
+	#check datatype of each integer columns
+					if [[ ${arr1[i]} == "int" ]]; then
+						if [[ "$data" =~ ^[0-9]+$ && "$data" -gt 0 ]];then
+							rw+=$data:
+							break 
+						else
+							echo -e "$er the data type of this column is Integer $main"
+							continue 
+						fi
+	#validate datatype for string columns
+							
+					else 
+						case $data in
+							*[[:space:]]*  )
+								data=$(echo "$data" | sed 's/[[:space:]]/_/g')
+								rw+=$data:
+								break
+
+							;;
+
+							*[0-9]* )
+								echo -e  "$er The value can't have any numbers $main"
+								continue
+							;;
+
+
+							*['!''@#/$\"*{^})(+|,;:~`.%&/=-]>[<?']* )
+								echo -e  "$er The name value can't have any special characters $main"
+								continue
+							;;
+
+
+							+([A-Za-z_]*) )
+								rw+=$data:
+								break					
+							;;
+
+							*)
+								echo -e "$er invalid data type $main"
+								continue				
+							;;
+						esac
+					fi
+				fi
+
+			done
+					
+		done
+#Append the row to the table
+		echo $rw >> $tname
+	fi
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

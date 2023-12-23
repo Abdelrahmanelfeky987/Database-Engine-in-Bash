@@ -1,0 +1,215 @@
+#!/usr/bin/bash
+export LC_COLLATE=C # Enable Case Senstive [Small , Capital ]
+shopt -s extglob   # Enable Special Regex 
+
+# Listing table names
+files=()
+for i in ./*
+do
+	if [ -f $i ] && [[ $i != *"_meta"* ]];then
+		files+=("$i")
+	else
+		continue
+	fi
+done
+        
+if [ ${#files[@]} -eq 0 ]; then
+       	echo -e "$er No tables found you can create one $main"
+else
+	for file in "${files[@]}"
+	do
+		echo "$file" | tr ./ ">"
+	done
+fi
+# Make User to choose a table from the list and check if the table exists or not
+while true 
+do    
+	echo -e -n "$pd choose table or ESC : $main"
+	read tbname
+
+
+	if [[ $tbname == $'\e' ]] ; then
+		. ~/project/options
+	elif [[ -z $tbname || ! -f $tbname ]] ; then
+		echo -e "$er No such table with this name $main"
+		continue
+	else	
+		clear
+		while true
+		do
+			OLDIFS=$IFS
+
+			found=false
+			echo -e -n "$pd Enter PK of record you want to update OR ESC : $main"
+			read data
+			if [[ $data == $'\e' ]] ; then
+			. ~/project/options
+			fi
+
+			# Read PKs from the first column of the table
+
+			loop=`cut -d : -f 1 $tbname`
+			read -ra arr3 <<< $loop
+			index=0
+			# Check if the entered PK exists
+
+			for val in "${arr3[@]}"
+			do
+				index=$((index + 1))
+				if [[ "$data" == "$val" ]];then
+					let index=$index
+					IFS=':'
+					line=`sed -n "${index}p" $tbname`
+					read -ra arr <<< "$line"
+					IFS=$OLDIFS
+					echo "Record $index for PK $data: ${arr[@]}"
+					found=true
+					break
+				fi
+			done
+
+
+			if [[ "$found" == true ]];then
+				IFS=':'
+		#	Names of columns 
+				str=`awk -F : '{if(NR == 1){print $0}}' $tbname"_meta"`
+				read -ra fields <<< "$str"
+		#	INT or String
+				str1=`awk -F : '{if(NR == 2){print $0}}' $tbname"_meta"`
+				read -ra arr1 <<<"$str1"
+		#	Unique or NOT
+				str2=`awk -F : '{if(NR==3){print $0}}' $tbname"_meta"`
+				read -ra arr2 <<< "$str2"
+				IFS=$OLDIFS
+
+				echo -e "$m Columns : ${fields[@]} $main"
+				echo -e -n "$pd Enter column name you want  to modify $main"
+				read colname
+				col_index=-1
+				
+
+		# Check if the entered column name exists
+
+				for ((i = 0 ; i <${#fields[@]} ; i++))
+				do
+
+					if [[ "$colname" == "${fields[i]}" ]]; then 	
+						col_index=$((i+1))
+						break
+					fi
+				done
+				if [[ $col_index -ne -1 ]];then
+
+					col_value=${arr[col_index -1]}
+					echo "Value in column '$colname' for PK $data: $col_value"
+				
+
+					while true
+					do
+						echo -e -n "$pd Enter new value for column '$colname': $main"
+						read new_value
+
+						lop=`cut -d : -f $col_index $tbname`
+						read -ra arr4 <<< $lop
+						fod=false
+
+
+							
+						if [[ ${arr2[i]} == "unique" ]] ;then
+
+							# Check if the new value is unique
+
+							for v in "${arr4[@]}"
+							do
+								if [[ "$new_value" == "$v" ]];then
+									fod=true
+									echo -e "$er This Column should be unique $main"
+									continue
+								fi
+							done
+						fi
+
+						if [[ $fod == false ]] ;then
+
+
+							if [[ "$data" =~ ^[[:space:]]*$ ]]; then
+					      			echo -e "$er The value can't be empty. $main"
+								continue
+					       		fi
+							# Validate new value based on data type
+							if [[ ${arr1[col_index -1]} == "int" ]]; then
+								if [[ "$new_value" =~ ^[0-9]+$  ]];then
+									# Update the value in the table if the column is integer 
+
+									sed -i ''$index's/'$col_value'/'$new_value'/g' $tbname
+									echo -e "$suc Column '$colname' updated with '$new_value'$main"
+									break 
+								else
+									echo -e "$er the data type of this column is Integer $main"
+									continue 
+								fi
+							else 
+								case $new_value in
+									*[[:space:]]*  )
+										new_value=$(echo "$new_value" | sed 's/[[:space:]]/_/g')
+									# Update the value in the table if the columns is string and user enter space replace spaces by _ 
+										sed -i ''$index's/'$col_value'/'$new_value'/g' $tbname
+										echo -e "$suc Column '$colname' updated with '$new_value'$main"
+										break 
+
+									;;
+
+									*[0-9]* )
+										echo -e  "$er The value can't start with numbers $main"
+										continue
+									;;
+
+
+									*['!''@#/$\"*{^})(+|,;:~`.%&/=-]>[<?']* )
+										echo -e  "$er The value have any special characters $main"
+										continue
+									;;
+
+
+									+([A-Za-z_]*) )
+									# Update the value in the table
+										sed -i ''$index's/'$col_value'/'$new_value'/g' $tbname
+										echo -e "$suc Column '$colname' updated with '$new_value'$main"
+										break					
+									;;
+
+									*)
+										echo -e "$er invalid data type $main"
+										continue				
+									;;
+								esac
+							fi
+											
+						fi
+					done
+
+		
+				else 
+					echo -e "$er This column doesn't Exist $main"
+					continue
+				fi
+			else
+				echo -e "$er This PK not Avialable $main"
+				continue
+			fi
+		done
+	fi
+done
+
+
+
+
+
+
+
+
+
+
+
+
+

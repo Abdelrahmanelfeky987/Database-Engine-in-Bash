@@ -1,0 +1,52 @@
+#!/usr/bin/bash
+#list table names for user 
+clear
+files=()
+for i in ./*
+do
+	if [ -f $i ] && [[ $i != *"_meta"* ]];then
+		files+=("$i")
+	else
+		continue
+	fi
+done
+        
+if [ ${#files[@]} -eq 0 ]; then
+       	echo "No tables found you can create one"
+else
+	for file in "${files[@]}"
+	do
+		echo "$file" | tr ./ ">"
+	done
+fi
+#------------------------------------------------------------------------
+# drop table 
+while true
+do
+# Prompt the user to enter table name to drop
+
+echo -e -n "${pd}Enter the table name you want to drop or ESC: ${main}" 
+read tname
+if [[ $tname == $'\e' ]] ; then
+	. ~/project/options
+elif [[ -z $tname || ! -f $tname ]] ; then
+	echo -e "$er No such table with this name $main"
+	continue
+else
+	echo -e -n "$er Are you sure (y/n) : $main"
+	read ans
+	if [[ $ans == y || $ans == Y ]] ; then
+		rm  $tname
+		rm $tname"_meta"
+		echo -e "$suc $tname Deleted $main"
+		sleep 2
+		. ~/project/options
+	elif [[ $ans == n || $ans == N ]] ; then
+		continue
+	else
+		echo -e "$er Invalid choice $main"
+		
+	fi
+fi
+done
+

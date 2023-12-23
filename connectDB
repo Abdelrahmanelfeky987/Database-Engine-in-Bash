@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+clear
+#Listing Databases 
+dir=~/DB
+if [ -z "$(ls -A "$dir")" ]; then
+	echo -e "$er The directory is empty. $main"
+else
+	ls -F $dir | grep / | tr / " "
+fi
+
+
+while true 
+do 
+    # Prompt the user to enter the name of the database to connect or press ESC to go back to the main menu
+
+	echo -e -n "$pd Enter the name of database you want to connect or ESC:  $main"
+	read  dbname
+	if [[ $dbname == $'\e' ]] ; then
+		. ~/project/main_menu
+
+    # Check if the entered database name is empty or does not exist
+
+	elif [[ -z $dbname || ! -d $dbname ]] ; then
+		echo -e "$er No such database with this name $main"
+		continue
+
+	else
+	# if the database exist then change the current directory to the specified database directory
+
+			cd $dbname
+			. ~/project/options
+
+	fi
+done
+

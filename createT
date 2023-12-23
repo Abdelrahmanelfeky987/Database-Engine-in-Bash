@@ -1,0 +1,211 @@
+#!/usr/bin/bash
+clear
+export LC_COLLATE=C # Enable Case Senstive [Small , Capital ]
+shopt -s extglob   # Enable Special Regex 
+while true 
+do
+	echo -e -n "$pd Enter table name or ESC: $main"
+	read nameT
+
+	# Evaluate different cases based on the entered table name
+
+	case $nameT in
+		*[[:space:]] | *[[:space:]]* | [[:space:]]* )
+        		nameT=$(echo "$nameT" | sed 's/[[:space:]]/_/g')
+			if [ -e $nameT ] ;then
+				echo -e "$er This table is already exist $main"
+				continue
+			else
+		# Create the table data  and meta data file
+
+				touch $nameT
+				touch $nameT"_meta"
+				echo -e "$suc $nameT is created $main"
+				break
+			fi
+		;;
+
+
+		'' )
+			echo -e  "$er The name can't be empty $main"
+			continue
+		;;
+
+
+		[0-9]* )
+			echo -e  "$er The name can't start with numbers $main"
+			continue
+		;;
+
+
+		*['!''@#/$\"*{^})(+|,;:~`.%&/=-]>[<?']* )
+			echo -e  "$er The name can't have any special characters $main"
+			continue
+		;;
+
+
+		+([A-Za-z_]*) )
+			if [ -e $nameT ] ;then
+				echo -e "$er This table is already exist $main"
+				continue
+			else
+				touch $nameT"_meta"
+				touch $nameT
+				echo -e "$suc $nameT is created successfully $main"
+				break
+			fi
+		;;
+
+		*)
+			. ~/project/options
+		;;
+	esac
+done
+
+#Detect the number of Fields (columns)
+while true
+do
+	    echo -e -n "${pd}Enter number of columns : ${main}"
+	    read cols
+	# Validate that the entered value is a positive integer
+
+	    if [[ "$cols" =~ ^[0-9]+$ && "$cols" -gt 0 ]]; then
+		echo -e "${suc}Number of fields is $cols ${main}"
+		break
+	    else
+		echo -e "${er}Please enter a number (no strings)${main}"
+	    fi
+done
+
+#Assign name of this fields
+let cols=$cols
+echo "The first column is primary key"
+row=""
+row2=""
+row3=""
+for((i=1;i<=$cols;i++))
+do
+
+		while true 
+			do
+	# Prompt the user to enter the name of the column or press ESC to go back to the options menu
+
+			echo -e -n "$pd Enter the name of column $i OR ESC  : $main"
+			read col
+			case $col in
+				*[[:space:]] | *[[:space:]]* | [[:space:]]* )
+					col=$(echo "$col" | sed 's/[[:space:]]/_/g')
+					if [[ $row  == *"${col}"* ]] ;then
+						echo -e "$er This column is already exist $main"
+						continue
+					else
+						row+=$col:
+						
+						break
+					fi
+				;;
+
+
+				'' )
+					echo -e  "$er The name can't be empty $main"
+					continue
+				;;
+
+
+				[0-9]* )
+					echo -e  "$er The name can't start with numbers $main"
+					continue
+				;;
+
+
+				*['!''@#/$\"*{^})(+|,;:~`.%&/=-]>[<?']* )
+					echo -e  "$er The name can't have any special characters $main"
+					continue
+				;;
+
+
+				+([A-Za-z_]*) )
+					if [[ $row  == *"${col}"* ]] ;then
+						echo -e "$er This column is already exist $main"
+						continue
+					else
+					# Append the column name to the row
+
+						row+=$col:
+						break
+					fi
+				;;
+
+				*)
+					. ~/project/options
+				;;
+			esac
+		done
+		while true
+		do 
+	# Prompt the user to enter the datatype of the column or press ESC to go back to the options menu
+			echo -e -n "$pd Enter the data type of column $i [int] OR [str]  : $main"
+			read col_type
+
+			if [[ $col_type == "int" || $col_type == "str" ]];then
+				row2+=$col_type:
+				break
+			else
+				echo -e "[int] OR [str] only"
+				continue
+			fi	
+		done
+		if [[ $i -eq 1 ]] ; then
+			row3+="unique":
+		echo "The first column by default unique (PK)"
+		else
+				while true
+				do 
+			# Prompt the user to enter if the column unique or not or press ESC to go back to the options menu
+					echo -e -n "$pd Enter the constraint of column $i [unique] OR [not ]  : $main"
+					read cons
+					if [[ $cons == "unique" || $cons == "not" ]];then
+						row3+=$cons:
+						break
+					else
+						echo "please enter unique  OR not only"
+						continue
+					fi	
+				done
+		fi
+
+done
+echo $row >> $nameT"_meta"
+
+echo $row2 >> $nameT"_meta"
+
+echo $row3 >> $nameT"_meta"
+
+
+
+#if the table created successfully 
+clear
+echo -e "$suc Your table created successfully $main"
+cat $nameT"_meta"
+sleep 3
+. ~/project/options
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

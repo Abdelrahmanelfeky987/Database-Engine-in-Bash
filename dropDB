@@ -1,0 +1,41 @@
+#!/usr/bin/bash
+clear
+dir=~/DB
+if [ -z "$(ls -A "$dir")" ]; then
+	echo -e "$er The directory is empty. $main"
+else
+	ls -F $dir | grep / | tr / " "
+fi 
+
+while true 
+do 	
+    # Prompt the user to enter the database to drop or press ESC to go back to the main menu
+
+	echo -e -n "${pd}Enter the database you want to drop or ESC: ${main}" 
+	read dbname
+    # Check if the user pressed ESC
+
+	if [[ $dbname == $'\e' ]] ; then
+		. ~/project/main_menu
+    # Check if the entered database name is empty or does not exist,then go back 
+
+	elif [[ -z $dbname || ! -d $dbname ]] ; then
+		echo -e "$er No such database with this name $main"
+		continue
+	else
+    # Confirm with the user if they really want to delete the database
+
+		echo -e -n "$er Are you sure (y/n) : $main"
+		read ans
+		if [[ $ans == y || $ans == Y ]] ; then
+			rm -r $dbname
+			echo -e  "$suc $dbname database Deleted successfully $main"
+			sleep 2
+			. ~/project/main_menu
+		elif [[ $ans == n || $ans == N ]] ; then
+			continue
+		else
+			echo -e "$er Invalid choice $main"
+		fi
+	fi
+done

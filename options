@@ -1,0 +1,49 @@
+#!/usr/bin/bash
+clear
+# menu for process on the table to create, drop, insert, select, delete, update and list tables
+	echo -e  "$suc................You are connected to $dbname...........................$main" 
+	PS3=`echo -e "$cyan $dbname>>> $main"`
+	select option in "Create Table" "List Tables" "Drop Table" "Insert in Table" "Select from Table" "Delete from Table" "Update Table" "Exit"
+	do
+		case $REPLY in
+			1)
+				echo -e "$tit..............................Creating Table.................................$main"
+				. ~/project/createT
+			;;
+
+			2)
+				echo -e "$tit.....................................Tabless......................................$main"
+				. ~/project/listT
+			;;
+
+			3)
+				echo -e "$tit....................................Dropping Table....................................$main"
+				. ~/project/dropT
+			;;
+
+			4)
+				echo -e "$tit.............................Inserting Data.............................$main"
+				. ~/project/insertT
+			;;
+
+			5)
+				echo -e "$tit......................................Selecting Data......................................$main"
+				. ~/project/selectT
+			;;
+			6)
+				echo -e "$tit......................................Deleting Data......................................$main"
+				. ~/project/deleteT
+			;;
+			7)
+				echo -e "$tit......................................Updating Data......................................$main"
+				. ~/project/updateT
+			;;
+			8)
+				. ~/project/main_menu
+			;;
+
+			*)
+				echo  -e "$er Invalid Option $main"
+			;;
+		esac
+	done
