@@ -31,4 +31,3 @@ Run this command in your terminal
 ```sh
 . ./main_menu
 ```
-
